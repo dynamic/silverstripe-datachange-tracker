@@ -2,9 +2,7 @@
 
 namespace Symbiote\DataChange\Model;
 
-use SilverStripe\Dev\Debug;
 use SilverStripe\ORM\DataObject;
-use SilverStripe\ORM\DB;
 use SilverStripe\ORM\FieldType\DBField;
 use SilverStripe\View\Requirements;
 use SilverStripe\Forms\FieldList;
@@ -103,8 +101,11 @@ class DataChangeRecord extends DataObject
         );
 
         if (strlen($this->Before) && strlen($this->ChangeRecordClass) && class_exists($this->ChangeRecordClass)) {
-            $before = Injector::inst()->create($this->ChangeRecordClass, json_decode($this->Before));
-            $after  = Injector::inst()->create($this->ChangeRecordClass, json_decode($this->After));
+            $decodedBefore = json_decode($this->Before);
+            $decodedAfter  = json_decode($this->After);
+
+            $before = Injector::inst()->create($this->ChangeRecordClass, $decodedBefore);
+            $after  = Injector::inst()->create($this->ChangeRecordClass, $decodedAfter);
             $diff   = DataDifferencer::create($before, $after);
 
             // The solr search service injector dependency causes issues with comparison, since it has public variables that are stored in an array.
@@ -121,6 +122,11 @@ class DataChangeRecord extends DataObject
                 if (is_array($prop)) {
                     $prop = json_encode($prop);
                 }
+
+                if(!array_key_exists($field, get_object_vars($decodedBefore)) || !array_key_exists($field, get_object_vars($decodedAfter))) {
+                    continue;
+                }
+
                 $changedFields[] = $readOnly        = \SilverStripe\Forms\ReadonlyField::create(
                     'ChangedField'.$field,
                     $field,
