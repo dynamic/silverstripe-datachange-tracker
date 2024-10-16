@@ -22,7 +22,7 @@ class ChangeRecordable extends DataExtension
      */
     public $dataChangeTrackService;
 
-    private static $ignored_fields = array();
+    private static $ignored_fields = [];
 
     protected $isNewObject = false;
 
@@ -35,9 +35,33 @@ class ChangeRecordable extends DataExtension
 
     public function onBeforeWrite()
     {
+        $confirmSkipTracking = function ($record) {
+            $changedFields = $record->getChangedFields(true, 2);
+
+            foreach ($changedFields as $field => $change) {
+                if ($field == 'SecurityID') {
+                    continue;
+                }
+                $before[$field] = $change['before'];
+                $after[$field] = $change['after'];
+            }
+
+            if (count($before) == 1
+                && count($after) == 1
+                && array_key_exists('Version', $before)
+                && array_key_exists('Version', $after)
+            ) {
+                return true;
+            }
+
+            return false;
+        };
+
         parent::onBeforeWrite();
         if ($this->owner->isInDB()) {
-            $this->dataChangeTrackService->track($this->owner, $this->changeType);
+            if (!$confirmSkipTracking($this->owner)) {
+                $this->dataChangeTrackService->track($this->owner, $this->changeType);
+            }
         } else {
             $this->isNewObject = true;
             $this->changeType = 'New';
@@ -80,10 +104,11 @@ class ChangeRecordable extends DataExtension
      *
      * @return \SilverStripe\ORM\DataList
      */
-    public function getDataChangesList() {
+    public function getDataChangesList()
+    {
         return DataChangeRecord::get()->filter([
             'ChangeRecordID' => $this->owner->ID,
-            'ChangeRecordClass' => $this->owner->ClassName
+            'ChangeRecordClass' => $this->owner->ClassName,
         ]);
     }
 }
