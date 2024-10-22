@@ -123,7 +123,7 @@ class DataChangeRecord extends DataObject
                     $prop = json_encode($prop);
                 }
 
-                if(!array_key_exists($field, get_object_vars($decodedBefore)) || !array_key_exists($field, get_object_vars($decodedAfter))) {
+                if((is_object($decodedBefore) && !array_key_exists($field, get_object_vars($decodedBefore))) || (is_object($decodedAfter) && !array_key_exists($field, get_object_vars($decodedAfter)))) {
                     continue;
                 }
 
@@ -184,6 +184,8 @@ class DataChangeRecord extends DataObject
                 }
             }
         }
+
+        print_r(self::config()->field_blacklist);
 
         foreach (self::config()->field_blacklist as $key) {
             if (isset($changes[$key])) {
