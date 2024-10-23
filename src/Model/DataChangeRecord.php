@@ -159,6 +159,8 @@ class DataChangeRecord extends DataObject
             }
         }
 
+        $this->extend('updateCMSFields', $fields);
+
         $fields = $fields->makeReadonly();
 
         return $fields;
@@ -184,8 +186,6 @@ class DataChangeRecord extends DataObject
                 }
             }
         }
-
-        print_r(self::config()->field_blacklist);
 
         foreach (self::config()->field_blacklist as $key) {
             if (isset($changes[$key])) {
