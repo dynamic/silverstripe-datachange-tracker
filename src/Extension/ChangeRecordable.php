@@ -46,7 +46,8 @@ class ChangeRecordable extends DataExtension
                 $after[$field] = $change['after'];
             }
 
-            if (count($before) == 1
+            if (isset($before)
+                && count($before) == 1
                 && count($after) == 1
                 && array_key_exists('Version', $before)
                 && array_key_exists('Version', $after)
