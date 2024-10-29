@@ -2,6 +2,7 @@
 
 namespace Symbiote\DataChange\Model;
 
+use SilverStripe\CMS\Model\SiteTree;
 use SilverStripe\ORM\DataObject;
 use SilverStripe\ORM\FieldType\DBField;
 use SilverStripe\View\Requirements;
@@ -41,6 +42,11 @@ class DataChangeRecord extends DataObject
         'ChangedBy' => 'SilverStripe\Security\Member',
         'ChangeRecord' => 'SilverStripe\ORM\DataObject',
     );
+
+    private static $many_many = [
+        'AffectedPages' => SiteTree::class,
+    ];
+
     private static $summary_fields    = array(
         'ChangeType' => 'Change Type',
         'ChangeRecordClass' => 'Record Class',
@@ -271,6 +277,11 @@ class DataChangeRecord extends DataObject
         $this->Agent    = isset($_SERVER['HTTP_USER_AGENT']) ? $_SERVER['HTTP_USER_AGENT'] : '';
 
         $this->write();
+
+        if ($this->hasMethod('getAffectedPageRecords')) {
+            $this->AffectedPages()->addMany($this->getAffectedPageRecords());
+        }
+
         return $this;
     }
 
