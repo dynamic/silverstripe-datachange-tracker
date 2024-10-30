@@ -2,8 +2,10 @@
 
 namespace Symbiote\DataChange\Model;
 
+use SilverStripe\ORM\DB;
 use SilverStripe\ORM\ManyManyList;
 use SilverStripe\ORM\DataObject;
+use SilverStripe\Versioned\Versioned;
 
 /**
  * A replacement manymany list that tracks add and remove calls
@@ -60,7 +62,20 @@ class TrackedManyManyList extends ManyManyList
             $join = $type === 'add' ? ' to ' : ' from ';
             $type = ucfirst($type) . ' "' . $item->Title . '"' . $join . $relationName;
             $onItem->RelatedItem = $item->ClassName . ' #' . $item->ID;
-            singleton('DataChangeTrackService')->track($onItem, $type);
+            $changeRecord = singleton('DataChangeTrackService')->track($onItem, $type);
+
+            if($changeRecord && $changeRecord->hasMethod('AffectedPages')) {
+                foreach($changeRecord->AffectedPages() as $page) {
+                    if ($page && $page->isPublished() && $item->hasExtension(Versioned::class) && $item->isPublished()) {
+                        // Update the LastEdited value for the SiteTree_Live record directly via SQL
+                        DB::query(sprintf(
+                            "UPDATE \"SiteTree_Live\" SET \"LastEdited\" = '%s' WHERE \"ID\" = %d",
+                            $changeRecord->Created,
+                            $page->ID
+                        ));
+                    }
+                }
+            }
         }
     }
 

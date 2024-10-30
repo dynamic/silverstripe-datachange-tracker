@@ -27,7 +27,9 @@ class DataChangeTrackService
             $this->dcr_cache["{$object->ID}-{$object->Classname}"] = DataChangeRecord::create();
         }
 
-        $this->dcr_cache["{$object->ID}-{$object->Classname}"]->track($object, $type);
+        $changeRecord = $this->dcr_cache["{$object->ID}-{$object->Classname}"]->track($object, $type);
+        
+        return $changeRecord;
     }
 
     public function resetChangeCache() {
