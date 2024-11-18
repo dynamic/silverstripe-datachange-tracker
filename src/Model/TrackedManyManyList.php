@@ -14,11 +14,29 @@ use SilverStripe\Versioned\Versioned;
  */
 class TrackedManyManyList extends ManyManyList
 {
-    public $trackedRelationships = array();
+    public $trackedRelationships = [];
 
-    public function add($item, $extraFields = array())
+    public function add($item, $extraFields = [])
     {
-        $this->recordManyManyChange(__FUNCTION__, $item);
+        $existingItem = $this->byID($item->ID);
+        $shouldRecordChange = false;
+
+        if (!$existingItem) {
+            $shouldRecordChange = true;
+        } elseif (!empty($extraFields)) {
+            $currentExtraData = $this->getExtraData($this->getJoinTable(), $item->ID);
+            foreach ($extraFields as $field => $value) {
+                if (!array_key_exists($field, $currentExtraData) || $currentExtraData[$field] !== $value) {
+                    $shouldRecordChange = true;
+                    break;
+                }
+            }
+        }
+
+        if ($shouldRecordChange) {
+            $this->recordManyManyChange(__FUNCTION__, $item);
+        }
+
         $result = parent::add($item, $extraFields);
         return $result;
     }
@@ -64,8 +82,8 @@ class TrackedManyManyList extends ManyManyList
             $onItem->RelatedItem = $item->ClassName . ' #' . $item->ID;
             $changeRecord = singleton('DataChangeTrackService')->track($onItem, $type);
 
-            if($changeRecord && $changeRecord->hasMethod('AffectedPages')) {
-                foreach($changeRecord->AffectedPages() as $page) {
+            if ($changeRecord && $changeRecord->hasMethod('AffectedPages')) {
+                foreach ($changeRecord->AffectedPages() as $page) {
                     if ($page && $page->isPublished() && $item->hasExtension(Versioned::class) && $item->isPublished()) {
                         // Update the LastEdited value for the SiteTree_Live record directly via SQL
                         DB::query(sprintf(
