@@ -18,7 +18,9 @@ class TrackedManyManyList extends ManyManyList
 
     public function add($item, $extraFields = [])
     {
-        $existingItem = $this->byID($item->ID);
+        $id = is_int($item) ? $item : $item->ID;
+
+        $existingItem = $this->byID($id);
         $shouldRecordChange = false;
 
         if (!$existingItem) {
