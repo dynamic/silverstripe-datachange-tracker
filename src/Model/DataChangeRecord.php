@@ -143,10 +143,10 @@ class DataChangeRecord extends DataObject
             }
 
             $fields->insertBefore(
+                'RawData',
                 ToggleCompositeField::create('FieldChanges', 'Changed Fields', $changedFields)
                     ->setStartClosed(false)
-                    ->addExtraClass('datachange-field'),
-                'RawData'
+                    ->addExtraClass('datachange-field')
             );
         }
 
