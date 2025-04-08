@@ -10,7 +10,6 @@
             "email": "marcus@symbiote.com.au"
         }
     ],
-
     "require": {
         "silverstripe/framework": "~5.0"
     },
@@ -18,7 +17,7 @@
         "expose": [
             "client"
         ],
-        "installer-name": "datachange-tracker",
+        "installer-name": "datachange-tracker"
     },
     "replace": {
         "sheadawson/silverstripe-datachange-tracker": "self.version",
