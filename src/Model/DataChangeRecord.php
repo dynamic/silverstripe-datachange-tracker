@@ -5,6 +5,7 @@ namespace Symbiote\DataChange\Model;
 use SilverStripe\CMS\Model\SiteTree;
 use SilverStripe\ORM\DataObject;
 use SilverStripe\ORM\FieldType\DBField;
+use SilverStripe\Security\Security;
 use SilverStripe\View\Requirements;
 use SilverStripe\Forms\FieldList;
 use SilverStripe\Forms\ToggleCompositeField;
@@ -254,10 +255,10 @@ class DataChangeRecord extends DataObject
             $this->PostVars = isset($_POST) ? json_encode($_POST) : null;
         }
 
-        $this->ChangedByID = Member::currentUserID();
+        $this->ChangedByID = Security::getCurrentUser()->ID;
 
-        if (Member::currentUserID() && Member::currentUser()) {
-            $this->CurrentEmail = Member::currentUser()->Email;
+        if (Security::getCurrentUser()->ID && Security::getCurrentUser()) {
+            $this->CurrentEmail = Security::getCurrentUser()->Email;
         }
 
         if (isset($_SERVER['SERVER_NAME'])) {
