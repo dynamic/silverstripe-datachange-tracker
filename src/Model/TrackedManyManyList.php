@@ -45,9 +45,52 @@ class TrackedManyManyList extends ManyManyList
 
     public function remove($item)
     {
-        $this->recordManyManyChange(__FUNCTION__, $item);
+        $id = is_int($item) ? $item : $item->ID;
+        $existingItem = $this->byID($id);
+
+        // Only record the change if the item actually exists in the relationship
+        if ($existingItem) {
+            $this->recordManyManyChange(__FUNCTION__, $item);
+        }
+
         $result = parent::remove($item);
         return $result;
+    }
+
+    public function setByIDList($idList)
+    {
+        // Only track changes if this relationship is in our tracked list
+        $joinName = $this->getJoinTable();
+        if (in_array($joinName, $this->trackedRelationships)) {
+            // Get current IDs to determine what's being added/removed
+            $currentIds = $this->getIDList();
+            $newIds = array_filter($idList ?? []);
+
+            // Find items being removed (in current but not in new)
+            $removedIds = array_diff($currentIds, $newIds);
+
+            // Find items being added (in new but not in current)
+            $addedIds = array_diff($newIds, $currentIds);
+
+            // Track removals
+            foreach ($removedIds as $removedId) {
+                $item = $this->dataClass()::get()->byID($removedId);
+                if ($item) {
+                    $this->recordManyManyChange('remove', $item);
+                }
+            }
+
+            // Track additions
+            foreach ($addedIds as $addedId) {
+                $item = $this->dataClass()::get()->byID($addedId);
+                if ($item) {
+                    $this->recordManyManyChange('add', $item);
+                }
+            }
+        }
+
+        // Call the parent method to actually update the relationship
+        return parent::setByIDList($idList);
     }
 
     protected function recordManyManyChange($type, $item)
